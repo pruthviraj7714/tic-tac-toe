@@ -4,10 +4,12 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev" : "bun run --watch index.ts"
+    "dev": "bun run --watch index.ts"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@repo/common": "*",
+    "@repo/db": "*"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -16,6 +18,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
     "@types/jsonwebtoken": "^9.0.10",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2"
