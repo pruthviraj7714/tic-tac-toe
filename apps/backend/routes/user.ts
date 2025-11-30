@@ -8,10 +8,10 @@ import { JWT_SECRET } from "../config";
 const userRouter = Router();
 
 userRouter.post("/signup", async (req, res) => {
-  const { success, data, error } = SignInSchema.safeParse(req.body);
+  const { success, data, error } = SignUpSchema.safeParse(req.body);
 
   if (!success) {
-    res.status(401).json({
+    res.status(400).json({
       message: "Invalid Inputs",
     });
     return;
@@ -33,7 +33,7 @@ userRouter.post("/signup", async (req, res) => {
 
     if (isUsernameOrEmailAlreadyExists) {
       res.status(409).json({
-        message: "User with given email or username already exists",
+        message: "User with this email or username already exists"
       });
       return;
     }
@@ -79,9 +79,7 @@ userRouter.post("/signin", async (req, res) => {
     });
 
     if (!user) {
-      res.status(401).json({
-        message: "User with given username not exist",
-      });
+      res.status(404).json({ message: "User not found" });
       return;
     }
 
@@ -98,7 +96,9 @@ userRouter.post("/signin", async (req, res) => {
       {
         userId: user.id,
       },
-      JWT_SECRET
+      JWT_SECRET, {
+        expiresIn : "7d"
+      }
     );
 
     res.status(200).json({
