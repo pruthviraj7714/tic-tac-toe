@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type Request, type Response } from "express";
 import { SignInSchema, SignUpSchema } from "@repo/common";
 import { prisma } from "@repo/db";
 import { compare, hash } from "bcryptjs";
@@ -7,19 +7,18 @@ import { JWT_SECRET } from "../config";
 
 const userRouter = Router();
 
-userRouter.post("/signup", async (req, res) => {
-  const { success, data, error } = SignUpSchema.safeParse(req.body);
-
-  if (!success) {
-    res.status(400).json({
-      message: "Invalid Inputs",
-    });
-    return;
-  }
-
-  const { email, password, username } = data;
-
+userRouter.post("/signup", async (req : Request, res : Response) : Promise<void> => {
   try {
+    const { success, data } = SignUpSchema.safeParse(req.body);
+  
+    if (!success) {
+      res.status(400).json({
+        message: "Invalid Inputs",
+      });
+      return;
+    }
+  
+    const { email, password, username } = data;
     const isUsernameOrEmailAlreadyExists = await prisma.user.findFirst({
       where: {
         OR: [
@@ -52,26 +51,28 @@ userRouter.post("/signup", async (req, res) => {
       message: "User Account Successfully Created",
       id: user.id,
     });
-  } catch (error) {
+  } catch (error : any) {
+    console.log(error);
+
     res.status(500).json({
       message: "Internal Server Error",
+      error : error.message
     });
   }
 });
 
-userRouter.post("/signin", async (req, res) => {
-  const { success, data, error } = SignInSchema.safeParse(req.body);
-
-  if (!success) {
-    res.status(401).json({
-      message: "Invalid Inputs",
-    });
-    return;
-  }
-
-  const { username, password } = data;
-
+userRouter.post("/signin", async (req : Request, res : Response) : Promise<void> => {
   try {
+    const { success, data } = SignInSchema.safeParse(req.body);
+  
+    if (!success) {
+      res.status(400).json({
+        message: "Invalid Inputs",
+      });
+      return;
+    }
+  
+    const { username, password } = data;
     const user = await prisma.user.findUnique({
       where: {
         username,
@@ -105,9 +106,12 @@ userRouter.post("/signin", async (req, res) => {
       message: "Successful Login",
       token,
     });
-  } catch (error) {
+  } catch (error : any) {
+    console.log(error);
+    
     res.status(500).json({
       message: "Internal Server Error",
+      error : error.message
     });
   }
 });
