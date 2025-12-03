@@ -27,13 +27,17 @@ model User {
 }
 
 model Room {
-  id        String     @id @default(uuid())
-  player1Id String
-  player2Id String?
-  player1   User       @relation("Player1", fields: [player1Id], references: [id])
-  player2   User?      @relation("Player2", fields: [player2Id], references: [id])
-  game      Game?
-  status    RoomStatus @default(PENDING)
+  id            String     @id @default(uuid())
+  name          String     @unique
+  isPrivate     Boolean    @default(false)
+  maxSpectators Int        @default(0)
+  player1Id     String
+  player2Id     String?
+  player1       User       @relation("Player1", fields: [player1Id], references: [id])
+  player2       User?      @relation("Player2", fields: [player2Id], references: [id])
+  game          Game?
+  status        RoomStatus @default(PENDING)
+  createdAt     DateTime   @default(now())
 }
 
 model Game {
@@ -69,4 +73,3 @@ enum Winner {
   PLAYER2
   DRAW
 }
-
