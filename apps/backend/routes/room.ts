@@ -90,4 +90,124 @@ roomRouter.get("/all", authMiddleware, async (req: Request, res: Response) => {
   }
 });
 
+roomRouter.get("/:id", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const roomId = req.params.id;
+
+    const room = await prisma.room.findUnique({
+      where: {
+        id: roomId,
+      },
+    });
+    
+    if (!room) {
+      res.status(404).json({
+        message: "Room not found",
+      });
+      return;
+    }
+    
+    res.status(200).json({
+      message: "Room found",
+      room,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+});
+
+roomRouter.post("/join-room", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const roomId = req.body.roomId;
+    const userId = req.userId!;
+
+    const room = await prisma.room.findUnique({
+      where: {
+        id: roomId,
+      },
+    });
+    
+    if (!room) {
+      res.status(404).json({
+        message: "Room not found",
+      });
+      return;
+    }
+    
+    if (room.player2Id) {
+      res.status(400).json({
+        message: "Room is already full",
+      });
+      return;
+    }
+    
+    await prisma.room.update({
+      where: {
+        id: roomId,
+      },
+      data: {
+        player2Id: userId,
+      },
+    });
+    
+    res.status(200).json({
+      message: "Room joined successfully",
+      room,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+});
+
+roomRouter.post("/leave-room", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const roomId = req.body.roomId;
+    const userId = req.userId!;
+
+    const room = await prisma.room.findUnique({
+      where: {
+        id: roomId,
+      },
+    });
+    
+    if (!room) {
+      res.status(404).json({
+        message: "Room not found",
+      });
+      return;
+    }
+    
+    if (room.player2Id !== userId) {
+      res.status(400).json({
+        message: "You are not the player2 of this room",
+      });
+      return;
+    }
+    
+    await prisma.room.update({
+      where: {
+        id: roomId,
+      },
+      data: {
+        player2Id: null,
+      },
+    });
+    
+    res.status(200).json({
+      message: "Room left successfully",
+      room,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+});
+
+
+
 export default roomRouter;
