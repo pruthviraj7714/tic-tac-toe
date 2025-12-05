@@ -14,13 +14,13 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  username  String   @unique
-  email     String   @unique
-  password  String
-  presence  PlayerPresence[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  id         String      @id @default(uuid())
+  username   String      @unique
+  email      String      @unique
+  password   String
+  spectators Spectator[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @default(now())
 
   rooms1 Room[] @relation("Player1")
   rooms2 Room[] @relation("Player2")
@@ -29,52 +29,50 @@ model User {
 }
 
 model Room {
-  id            String     @id @default(uuid())
-  name          String     @unique
-  isPrivate     Boolean    @default(false)
-  maxSpectators Int        @default(0)
-  presence      PlayerPresence[]
+  id            String      @id @default(uuid())
+  name          String    
+  isPrivate     Boolean     @default(false)
+  roomCode      Int          @unique
+  maxSpectators Int         @default(0)
   password      String?
-  status        RoomStatus @default(PENDING)
+  status        RoomStatus  @default(PENDING)
   games         Game[]
-  createdAt     DateTime   @default(now())
+  spectators    Spectator[]
+  createdAt     DateTime    @default(now())
 
   player1Id String
   player2Id String?
-  player1   User    @relation("Player1", fields: [player1Id], references: [id])
-  player2   User?   @relation("Player2", fields: [player2Id], references: [id])
+  player1   User    @relation("Player1", fields: [player1Id], references: [id], onDelete: Cascade)
+  player2   User?   @relation("Player2", fields: [player2Id], references: [id], onDelete: Cascade)
 }
 
 model Game {
-  id          String     @id @default(uuid())
-  roomId      String     @unique
-  player1Id   String
-  player2Id   String
-  winner      Winner?
-  boardState  String     @default("_________")
-  moves       Json       @default("[]")
-  currentTurn PlayerTurn @default(PLAYER1)
-  status      GameStatus
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id            String     @id @default(uuid())
+  roomId        String
+  player1Id     String
+  player2Id     String
+  winner        Winner?
+  boardState    String     @default("_________")
+  moves         Json       @default("[]")
+  currentTurn   PlayerTurn @default(PLAYER1)
+  symbolPlayer1 Symbol     @default(X)
+  symbolPlayer2 Symbol     @default(O)
+  status        GameStatus
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
   room    Room @relation(fields: [roomId], references: [id])
-  player1 User @relation("GamePlayer1", fields: [player1Id], references: [id])
-  player2 User @relation("GamePlayer2", fields: [player2Id], references: [id])
+  player1 User @relation("GamePlayer1", fields: [player1Id], references: [id], onDelete: Cascade)
+  player2 User @relation("GamePlayer2", fields: [player2Id], references: [id], onDelete: Cascade)
 }
 
-model PlayerPresence {
-  id       String   @id @default(uuid())
-  userId   String
-  roomId   String
-  isOnline Boolean  @default(true)
-  lastSeen DateTime @default(now())
+model Spectator {
+  id     String @id @default(uuid())
+  roomId String
+  userId String
 
-  user User @relation(fields: [userId], references: [id])
-  room Room @relation(fields: [roomId], references: [id])
-
-  @@index([roomId])
-  @@index([userId])
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum GameStatus {
@@ -100,4 +98,9 @@ enum RoomStatus {
   FULL
   STARTED
   ENDED
+}
+
+enum Symbol {
+  X
+  O
 }
