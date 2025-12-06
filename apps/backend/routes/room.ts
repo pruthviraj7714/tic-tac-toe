@@ -1,6 +1,11 @@
 import { Router, type Request, type Response } from "express";
 import authMiddleware from "../middleware/authMiddleware";
-import { CreateRoomSchema } from "@repo/common";
+import {
+  CreateRoomSchema,
+  JoinRoomSchema,
+  RenameRoomSchema,
+  UpdateRoomSettingSchema,
+} from "@repo/common";
 import { prisma } from "@repo/db";
 
 const roomRouter = Router();
@@ -22,9 +27,9 @@ roomRouter.post(
         return;
       }
 
-      const { isPrivate, maxSpectators, name } = data;
+      const { isPrivate, maxSpectators, name, password } = data;
 
-      const roomCode = 123346;
+      const roomCode = Math.floor(100000 + Math.random() * 900000);
 
       const room = await prisma.room.create({
         data: {
@@ -32,6 +37,7 @@ roomRouter.post(
           maxSpectators,
           roomCode,
           isPrivate,
+          password: password ?? null,
           player1Id: userId,
         },
       });
@@ -79,51 +85,41 @@ roomRouter.get("/all", authMiddleware, async (req: Request, res: Response) => {
   }
 });
 
-roomRouter.get("/:id", authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const roomId = req.params.id;
-
-    const room = await prisma.room.findUnique({
-      where: {
-        id: roomId,
-      },
-    });
-
-    if (!room) {
-      res.status(404).json({
-        message: "Room not found",
-      });
-      return;
-    }
-
-    res.status(200).json({
-      message: "Room found",
-      room,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Internal Server Error",
-    });
-  }
-});
-
 roomRouter.post(
   "/join-room",
   authMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const roomId = req.body.roomId;
       const userId = req.userId!;
+
+      const { success, data, error } = JoinRoomSchema.safeParse(req.body);
+
+      if (!success) {
+        res.status(400).json({
+          message: "Invalid Inputs",
+          error: error.flatten(),
+        });
+        return;
+      }
+
+      const { roomCode, password } = data;
 
       const room = await prisma.room.findUnique({
         where: {
-          id: roomId,
+          roomCode,
         },
       });
 
       if (!room) {
         res.status(404).json({
           message: "Room not found",
+        });
+        return;
+      }
+
+      if (room.isPrivate && room.password !== password) {
+        res.status(401).json({
+          message: "Incorrect Room Password",
         });
         return;
       }
@@ -137,7 +133,7 @@ roomRouter.post(
 
       await prisma.room.update({
         where: {
-          id: roomId,
+          id: room.id,
         },
         data: {
           player2Id: userId,
@@ -206,22 +202,16 @@ roomRouter.post(
 );
 
 roomRouter.post(
-  "/spectate-room",
+  "/spectate-room/:roomId",
   authMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const roomId = req.body.roomId;
+      const roomId = req.params.roomId!;
       const userId = req.userId!;
 
       const room = await prisma.room.findUnique({
         where: {
           id: roomId,
-        },
-      });
-
-      const spectators = await prisma.spectator.count({
-        where: {
-          roomId,
         },
       });
 
@@ -232,6 +222,12 @@ roomRouter.post(
         return;
       }
 
+      const spectators = await prisma.spectator.count({
+        where: {
+          roomId,
+        },
+      });
+
       if (room.maxSpectators <= spectators) {
         res.status(400).json({
           message: "Room is already full",
@@ -240,11 +236,12 @@ roomRouter.post(
       }
 
       await prisma.spectator.create({
-        data : {
+        data: {
           roomId,
-          userId
-        }
-      })
+          userId,
+          
+        },
+      });
 
       res.status(200).json({
         message: "Room spectated successfully",
@@ -259,11 +256,11 @@ roomRouter.post(
 );
 
 roomRouter.post(
-  "/unspectate-room",
+  "/unspectate-room/:roomId",
   authMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const roomId = req.body.roomId;
+      const roomId = req.params.roomId;
       const userId = req.userId!;
 
       const room = await prisma.room.findUnique({
@@ -272,19 +269,19 @@ roomRouter.post(
         },
       });
 
-      const spectator = await prisma.spectator.findFirst({
-        where : {
-          userId,
-          roomId
-        }
-      })
-
       if (!room) {
         res.status(404).json({
           message: "Room not found",
         });
         return;
       }
+
+      const spectator = await prisma.spectator.findFirst({
+        where: {
+          userId,
+          roomId,
+        },
+      });
 
       if (!spectator) {
         res.status(400).json({
@@ -294,39 +291,15 @@ roomRouter.post(
       }
 
       await prisma.spectator.delete({
-        where : {
-          id : spectator.id
-        }
-      })
-
-      return res.status(200).json({
-        message: "Room unspectated successfully",
-        room,
-        spectator
-      });
-    } catch (error) {
-      return res.status(500).json({
-        message: "Internal Server Error",
-      });
-    }
-  }
-);
-
-roomRouter.post(
-  "/get-spectators",
-  authMiddleware,
-  async (req: Request, res: Response) => {
-    try {
-      const roomId = req.body.roomId;
-
-      const spectators = await prisma.spectator.findMany({
         where: {
-          roomId,
+          id: spectator.id,
         },
       });
 
       return res.status(200).json({
-        spectators: spectators || [],
+        message: "Room unspectated successfully",
+        room,
+        spectatorId: spectator.id,
       });
     } catch (error) {
       return res.status(500).json({
@@ -337,11 +310,11 @@ roomRouter.post(
 );
 
 roomRouter.post(
-  "/get-players",
+  "/:roomId/players",
   authMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const roomId = req.body.roomId;
+      const roomId = req.params.roomId;
 
       const room = await prisma.room.findUnique({
         where: {
@@ -377,6 +350,259 @@ roomRouter.post(
       });
     } catch (error) {
       return res.status(500).json({
+        message: "Internal Server Error",
+      });
+    }
+  }
+);
+
+roomRouter.get(
+  "/rooms",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const rooms = await prisma.room.findMany({
+        where: {
+          isPrivate: false,
+        },
+      });
+
+      res.status(200).json(rooms || []);
+    } catch (error) {
+      res.status(500).json({
+        message: "Internal Server Error",
+      });
+    }
+  }
+);
+
+roomRouter.get(
+  "/:roomId",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const roomId = req.params.roomId;
+
+      const room = await prisma.room.findFirst({
+        where: {
+          id: roomId,
+        },
+        include: {
+          player1: {
+            select: {
+              email: true,
+              username: true,
+              id: true,
+            },
+          },
+          player2: {
+            select: {
+              username: true,
+              email: true,
+              id: true,
+            },
+          },
+          spectators: {
+            include: {
+              user: {
+                select: {
+                  username: true,
+                  email: true,
+                  id: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      res.status(200).json(room);
+    } catch (error) {
+      res.status(500).json({
+        message: "Internal Server Error",
+      });
+    }
+  }
+);
+
+roomRouter.get(
+  "/:roomId/spectators",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const roomId = req.params.roomId;
+
+      const spectators = await prisma.spectator.findMany({
+        where: {
+          roomId,
+        },
+        include: {
+          user: {
+            select: {
+              username: true,
+              email: true,
+            },
+          },
+        },
+      });
+
+      res.status(200).json(spectators || []);
+    } catch (error) {
+      res.status(500).json({
+        message: "Internal Server Error",
+      });
+    }
+  }
+);
+
+roomRouter.patch(
+  "/:roomId/rename",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const roomId = req.params.roomId;
+
+      const { success, error, data } = RenameRoomSchema.safeParse(req.body);
+
+      if (!success) {
+        res.status(400).json({
+          message: "Invalid Inputs",
+          error: error.flatten(),
+        });
+        return;
+      }
+
+      const { newName } = data;
+
+      const room = await prisma.room.findFirst({
+        where: {
+          id: roomId,
+        },
+      });
+
+      if (!room) {
+        res.status(404).json({
+          message: "Room not found",
+        });
+        return;
+      }
+
+      await prisma.room.update({
+        where: {
+          id: room.id,
+        },
+        data: {
+          name: newName,
+        },
+      });
+
+      res.status(200).json({
+        message: "Room Successfully Renamed",
+        room,
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Internal Server Error",
+      });
+    }
+  }
+);
+
+roomRouter.patch(
+  "/:roomId/update-setting",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const roomId = req.params.roomId;
+
+      const room = await prisma.room.findFirst({
+        where: {
+          id: roomId,
+        },
+      });
+
+      if (!room) {
+        res.status(404).json({
+          message: "Room not found",
+        });
+        return;
+      }
+
+      const { success, data, error } = UpdateRoomSettingSchema.safeParse(
+        req.body
+      );
+
+      if (!success) {
+        res.status(400).json({
+          message: "Invalid Inputs",
+          error: error.message,
+        });
+        return;
+      }
+
+      const { isPrivate, maxSpectators, password } = data;
+
+      await prisma.room.update({
+        where: {
+          id: room.id,
+        },
+        data: {
+          isPrivate: isPrivate,
+          maxSpectators,
+          password: password ?? null,
+        },
+      });
+
+      res.status(200).json({
+        message: "Room Setting updated successfully",
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Internal Server Error",
+      });
+    }
+  }
+);
+
+roomRouter.delete(
+  "/:roomId",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const roomId = req.params.roomId;
+      const userId = req.userId!;
+      const room = await prisma.room.findFirst({
+        where: {
+          id: roomId,
+        },
+      });
+
+      if (!room) {
+        res.status(404).json({
+          message: "Room not found",
+        });
+        return;
+      }
+
+      if (room.player1Id !== userId) {
+        res.status(403).json({
+          message: "You are not authorized to delete this room",
+        });
+        return;
+      }
+
+      await prisma.room.delete({
+        where: {
+          id: roomId,
+        },
+      });
+
+      res.status(200).json({
+        message: "Room successfully Deleted",
+        id: room.id,
+      });
+    } catch (error) {
+      res.status(500).json({
         message: "Internal Server Error",
       });
     }

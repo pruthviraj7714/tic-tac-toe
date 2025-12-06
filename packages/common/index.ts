@@ -21,4 +21,20 @@ export const CreateRoomSchema = z.object({
     .min(4, { error: "Room Name Should be at least of 4 characters" }),
   maxSpectators: z.number({ error: "It should be valid number" }),
   isPrivate: z.boolean(),
+  password : z.string().min(8, {error : "Password must be at least of 8 characters"}).optional()
 });
+
+export const JoinRoomSchema = z.object({
+  roomCode : z.number(),
+  password : z.string().min(8, {error : "Password must be at least of 8 characters"}).optional()
+})
+
+export const RenameRoomSchema = z.object({
+  newName : z.string().min(4, {error : "Room name should be at least of 4 characters"})
+})
+
+export const UpdateRoomSettingSchema = z.object({
+  maxSpectators: z.number({ error: "It should be valid number" }),
+  isPrivate: z.boolean(),
+  password : z.string().min(8, {error : "Password must be at least of 8 characters"}).optional()
+})

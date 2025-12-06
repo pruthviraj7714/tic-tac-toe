@@ -16,7 +16,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/v1/user", userRouter);
-app.use("/api/v1/room", roomRouter);
+app.use("/api/v1/rooms", roomRouter);
 app.use("/api/v1/game", gameRouter);
 
 app.listen(3000, () => {
