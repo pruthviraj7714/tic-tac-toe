@@ -111,6 +111,7 @@ userRouter.post(
       res.status(200).json({
         message: "Successful Login",
         token,
+        id : user.id
       });
     } catch (error: any) {
       console.log(error);

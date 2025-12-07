@@ -19,6 +19,6 @@ app.use("/api/v1/user", userRouter);
 app.use("/api/v1/rooms", roomRouter);
 app.use("/api/v1/game", gameRouter);
 
-app.listen(3000, () => {
-  console.log("server is running on port 3000");
+app.listen(3001, () => {
+  console.log("server is running on port 3001");
 });

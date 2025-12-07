@@ -4,9 +4,10 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
+import { toast } from "sonner"
+import { signIn } from "next-auth/react"
 
-export default function SignUpPage() {
-  const [email, setEmail] = useState("")
+export default function SignInPage() {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -14,7 +15,24 @@ export default function SignUpPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setTimeout(() => setLoading(false), 1000)
+    try {
+
+      const res = await signIn("credentials", {
+        username,
+        password,
+        redirect : true,
+        callbackUrl : '/home'
+      });
+
+      if(!res?.ok) {
+        toast.error(res?.error)
+      }
+
+    } catch (error : any) {
+      toast.error(error.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -29,23 +47,11 @@ export default function SignUpPage() {
             <span className="text-xl font-bold">TacticBoard</span>
           </Link>
 
-          <h1 className="text-3xl font-bold mb-2 text-white">Create Account</h1>
-          <p className="text-slate-400">Join thousands of players competing now</p>
+          <h1 className="text-3xl font-bold mb-2 text-white">Welcome Back</h1>
+          <p className="text-slate-400">Sign in to continue playing</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-2 text-slate-200">Email Address</label>
-            <Input
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="bg-slate-900 border-slate-700 text-white placeholder:text-slate-500"
-              required
-            />
-          </div>
-
           <div>
             <label className="block text-sm font-medium mb-2 text-slate-200">Username</label>
             <Input
@@ -70,12 +76,22 @@ export default function SignUpPage() {
             />
           </div>
 
+          <div className="flex items-center justify-between text-sm">
+            <label className="flex items-center gap-2 text-slate-400">
+              <input type="checkbox" className="rounded border-slate-600 bg-slate-900" />
+              Remember me
+            </label>
+            <Link href="#" className="text-blue-400 hover:text-blue-300">
+              Forgot password?
+            </Link>
+          </div>
+
           <Button
             type="submit"
             disabled={loading}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white mt-6"
           >
-            {loading ? "Creating Account..." : "Create Account"}
+            {loading ? "Signing In..." : "Sign In"}
           </Button>
         </form>
 
@@ -84,21 +100,21 @@ export default function SignUpPage() {
             <div className="w-full border-t border-slate-700"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-[#0B0F19] text-slate-400">Already have an account?</span>
+            <span className="px-2 bg-[#0B0F19] text-slate-400">New to TacticBoard?</span>
           </div>
         </div>
 
-        <Link href="/signin">
+        <Link href="/signup">
           <Button
             variant="outline"
             className="w-full border-slate-700 text-slate-200 hover:bg-slate-900 bg-transparent"
           >
-            Sign In
+            Create Account
           </Button>
         </Link>
 
         <p className="text-center text-sm text-slate-500 mt-6">
-          By signing up, you agree to our{" "}
+          By signing in, you agree to our{" "}
           <Link href="#" className="text-blue-400 hover:text-blue-300">
             Terms of Service
           </Link>
