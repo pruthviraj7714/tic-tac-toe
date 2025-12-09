@@ -20,16 +20,26 @@ export default function SignInPage() {
       const res = await signIn("credentials", {
         username,
         password,
-        redirect : true,
+        redirect : false,
         callbackUrl : '/home'
       });
 
-      if(!res?.ok) {
-        toast.error(res?.error)
-      }
+    if (res?.error) {
+      const message =
+        res.error === "CredentialsSignin"
+          ? "Invalid username or password"
+          : res.error;
+
+      toast.error(message);
+      return;
+    }
+
+    if (res?.ok && res.url) {
+      window.location.href = res.url;
+    }
 
     } catch (error : any) {
-      toast.error(error.message)
+      toast.error(error?.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false)
     }

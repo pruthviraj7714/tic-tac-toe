@@ -7,32 +7,48 @@ import Link from "next/link";
 import { toast } from "sonner";
 import axios from "axios";
 import { BACKEND_URL } from "@/lib/config";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+  
     try {
       const res = await axios.post(`${BACKEND_URL}/user/signup`, {
         username,
         password,
         email,
       });
-
-      toast.success(res.data.message);
-      redirect('/signin');
+  
+      toast.success(res.data?.message || "Signup successful!");
+      router.push("/signin");
     } catch (error: any) {
-      toast.error(error.message || error.response?.data.message);
-    } finally { 
+      let message = "Something went wrong. Please try again.";
+  
+      if (error.response?.data?.message) {
+        message = error.response.data.message;
+      }
+      else if (error.message === "Network Error") {
+        message = "Unable to connect to server. Please try again later.";
+      }
+      else if (error.message) {
+        message = error.message;
+      }
+  
+      toast.error(message);
+  
+    } finally {
       setLoading(false);
     }
   };
+  
 
   return (
     <main className="min-h-screen bg-[#0B0F19] text-white flex items-center justify-center px-6">
