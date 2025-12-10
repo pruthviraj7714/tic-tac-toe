@@ -1,53 +1,63 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Gamepad2, Eye, Users2, PlusCircle } from "lucide-react"
-import { BACKEND_URL } from "@/lib/config"
-import { toast } from "sonner"
-import axios from "axios"
-import { useSession } from "next-auth/react"
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Gamepad2, Eye, Users2, PlusCircle } from "lucide-react";
+import { BACKEND_URL } from "@/lib/config";
+import { toast } from "sonner";
+import axios from "axios";
+import { useSession } from "next-auth/react";
 
 export default function HomePage() {
-  const [rooms, setRooms] = useState([])
-  const [searchCode, setSearchCode] = useState("")
-  const [loading, setLoading] = useState(false)
-  const { data, status} = useSession();
+  const [rooms, setRooms] = useState([]);
+  const [searchCode, setSearchCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { data, status } = useSession();
 
   useEffect(() => {
-    if(status === 'authenticated') {
-      fetchRooms()
+    if (status === "authenticated") {
+      fetchRooms();
     }
-  }, [status])
+  }, [status]);
 
   const fetchRooms = async () => {
     try {
       const res = await axios.get(`${BACKEND_URL}/rooms/all`, {
-        headers : {
-          Authorization : `Bearer ${data?.accessToken}`
-        }
-      })
-      setRooms(res.data.rooms)
-    } catch (error : any) {
-        toast.error(error.message || error.response?.data?.message)      
+        headers: {
+          Authorization: `Bearer ${data?.accessToken}`,
+        },
+      });
+      setRooms(res.data.rooms);
+    } catch (error: any) {
+      toast.error(error.message || error.response?.data?.message);
     }
-  }
+  };
 
   const handleJoinByCode = async () => {
-    if (!searchCode) return
-    setLoading(true)
-    const res = await fetch(`/api/rooms/join/${searchCode}`)
-    const data = await res.json()
-    setLoading(false)
+    if (!searchCode) return;
+    try {
+      setLoading(true);
+      const res = await axios.post(`${BACKEND_URL}/rooms/join-room`, {
+        roomCode : Number(searchCode)
+      }, {
+        headers: {
+          Authorization: `Bearer ${data?.accessToken}`,
+        },
+      });
 
-    if (data.roomId) {
-      window.location.href = `/room/${data.roomId}`
+      if (res.data.roomId) {
+        window.location.href = `/rooms/${res.data.roomId}`;
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || error.message);
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white px-6 py-10">
@@ -124,16 +134,23 @@ export default function HomePage() {
                 </CardHeader>
 
                 <CardContent className="text-neutral-400 space-y-3">
-                  <p>Room Code: <span className="text-white">{room.roomCode}</span></p>
-
-                  <p className="flex items-center gap-2">
-                    <Users2 className="w-4 h-4" /> 
-                    Players: <span className="text-white">{room.playerCount}/2</span>
+                  <p>
+                    Room Code:{" "}
+                    <span className="text-white">{room.roomCode}</span>
                   </p>
 
                   <p className="flex items-center gap-2">
-                    <Eye className="w-4 h-4" /> 
-                    Spectators: <span className="text-white">{room?.spectators?.length || 0}</span>
+                    <Users2 className="w-4 h-4" />
+                    Players:{" "}
+                    <span className="text-white">{room.player2 ? 2 : 1}/2</span>
+                  </p>
+
+                  <p className="flex items-center gap-2">
+                    <Eye className="w-4 h-4" />
+                    Spectators:{" "}
+                    <span className="text-white">
+                      {room?.spectators?.length || 0}
+                    </span>
                   </p>
 
                   <div className="flex gap-2 mt-4">
@@ -144,7 +161,10 @@ export default function HomePage() {
                     </Link>
 
                     <Link href={`/spectate/${room.id}`}>
-                      <Button variant="outline" className="border-neutral-700">
+                      <Button
+                        variant="outline"
+                        className="border-neutral-700 text-black"
+                      >
                         <Eye className="mr-2 h-4 w-4" /> Watch
                       </Button>
                     </Link>
@@ -158,5 +178,5 @@ export default function HomePage() {
 
       <div className="h-20" />
     </div>
-  )
+  );
 }

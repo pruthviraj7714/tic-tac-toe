@@ -50,7 +50,7 @@ export default function CreateRoomPage() {
       setLoading(false);
 
       toast.success("Room created!");
-      router.push(`/room/${res.data.id}`);
+      router.push(`/rooms/${res.data.id}`);
     } catch (error: any) {
       toast.error(error.message || "Failed to create room");
     } finally {

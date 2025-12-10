@@ -17,7 +17,7 @@ export default function AppBar({ user }: { user?: any }) {
 
   return (
     <header className="w-full bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
-      <Link href="/" className="flex items-center gap-2">
+      <Link href="/home" className="flex items-center gap-2">
         <Gamepad2 className="h-7 w-7 text-blue-500" />
         <h1 className="text-xl font-bold text-white">TicTac Arena</h1>
       </Link>

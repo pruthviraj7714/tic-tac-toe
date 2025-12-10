@@ -142,7 +142,7 @@ roomRouter.post(
 
       res.status(200).json({
         message: "Room joined successfully",
-        room,
+        roomId : room.id,
       });
     } catch (error) {
       res.status(500).json({
