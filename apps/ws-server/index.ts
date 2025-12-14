@@ -12,9 +12,43 @@ function authenticate(token: string) {
     return null;
   }
 }
+
+type Cell = "X" | "O" | "-";
+type GameStatus = "waiting" | "in-progress" | "finished";
+
+interface IUser {
+  id: string;
+  username: string;
+}
+
+type ISpectator = IUser;
+
+interface IPlayer extends IUser {
+  symbol: "X" | "O";
+}
+
+interface IGame {
+  currTurn: "X" | "O";
+  player1Symbol: "X" | "O";
+  player2Symbol: "X" | "O";
+  board: [Cell, Cell, Cell, Cell, Cell, Cell, Cell, Cell, Cell];
+  winner: null | IPlayer;
+  status: GameStatus;
+}
+
+interface IRoom {
+  roomId: string;
+  players: [IPlayer, IPlayer, null];
+  spectators: ISpectator[];
+  games: IGame[];
+}
+
+const rooms = new Map<string, IRoom>();
+
 wss.on("connection", (ws, req) => {
   const params = new URLSearchParams(req.url?.split("?")[1]);
   const token = params.get("token");
+  const roomId = params.get("roomId");
 
   if (!token) {
     ws.send(

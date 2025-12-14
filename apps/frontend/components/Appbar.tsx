@@ -1,19 +1,27 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Menu, X, LogOut, User, PlusCircle, Gamepad2, Home } from "lucide-react"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Menu,
+  X,
+  LogOut,
+  User,
+  PlusCircle,
+  Gamepad2,
+  Home,
+} from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { signOut } from "next-auth/react";
 
 export default function AppBar({ user }: { user?: any }) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
 
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" })
-    window.location.href = "/signin"
-  }
+    await signOut({ callbackUrl: "/" });
+  };
 
   return (
     <header className="w-full bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
@@ -23,28 +31,28 @@ export default function AppBar({ user }: { user?: any }) {
       </Link>
 
       <nav className="hidden md:flex items-center gap-6">
-        <Link 
-          href="/home" 
+        <Link
+          href="/home"
           className="text-neutral-300 hover:text-white transition flex items-center gap-1"
         >
           <Home className="h-4 w-4" /> Home
         </Link>
 
-        <Link 
-          href="/rooms" 
+        <Link
+          href="/rooms"
           className="text-neutral-300 hover:text-white transition flex items-center gap-1"
         >
           <Gamepad2 className="h-4 w-4" /> Rooms
         </Link>
 
-        <Link 
+        <Link
           href="/create-room"
           className="text-neutral-300 hover:text-white transition flex items-center gap-1"
         >
           <PlusCircle className="h-4 w-4" /> Create Room
         </Link>
 
-        <Link 
+        <Link
           href="/profile"
           className="text-neutral-300 hover:text-white transition flex items-center gap-1"
         >
@@ -59,9 +67,9 @@ export default function AppBar({ user }: { user?: any }) {
             </AvatarFallback>
           </Avatar>
 
-          <Button 
-            size="sm" 
-            variant="outline" 
+          <Button
+            size="sm"
+            variant="outline"
             className="border-neutral-700 "
             onClick={handleLogout}
           >
@@ -73,12 +81,15 @@ export default function AppBar({ user }: { user?: any }) {
       <div className="md:hidden">
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
-            <Button variant="outline" className="border-neutral-700 text-white">
+            <Button variant="outline" className="border-neutral-700 text-black">
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
 
-          <SheetContent side="left" className="bg-neutral-900 border-neutral-800 p-6">
+          <SheetContent
+            side="left"
+            className="bg-neutral-900 border-neutral-800 p-6"
+          >
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <Gamepad2 className="h-6 w-6 text-blue-500" />
@@ -101,19 +112,25 @@ export default function AppBar({ user }: { user?: any }) {
                 Rooms
               </Link>
 
-              <Link href="/create-room" className="text-neutral-300 hover:text-white">
+              <Link
+                href="/create-room"
+                className="text-neutral-300 hover:text-white"
+              >
                 <PlusCircle className="inline-block h-4 w-4 mr-2" />
                 Create Room
               </Link>
 
-              <Link href="/profile" className="text-neutral-300 hover:text-white">
+              <Link
+                href="/profile"
+                className="text-neutral-300 hover:text-white"
+              >
                 <User className="inline-block h-4 w-4 mr-2" />
                 Profile
               </Link>
 
               <Button
                 variant="outline"
-                className="border-neutral-700 text-white mt-4"
+                className="border-neutral-700 text-black mt-4"
                 onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4 mr-2" /> Logout
@@ -123,5 +140,5 @@ export default function AppBar({ user }: { user?: any }) {
         </Sheet>
       </div>
     </header>
-  )
+  );
 }
