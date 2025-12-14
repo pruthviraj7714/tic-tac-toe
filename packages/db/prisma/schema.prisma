@@ -33,7 +33,6 @@ model Room {
   name          String    
   isPrivate     Boolean     @default(false)
   roomCode      Int          @unique
-  maxSpectators Int         @default(0)
   password      String?
   status        RoomStatus  @default(PENDING)
   games         Game[]

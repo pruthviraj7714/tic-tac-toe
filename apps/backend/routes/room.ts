@@ -27,14 +27,13 @@ roomRouter.post(
         return;
       }
 
-      const { isPrivate, maxSpectators, name, password } = data;
+      const { isPrivate, name, password } = data;
 
       const roomCode = Math.floor(100000 + Math.random() * 900000);
 
       const room = await prisma.room.create({
         data: {
           name,
-          maxSpectators,
           roomCode,
           isPrivate,
           password: password ?? null,
@@ -218,19 +217,6 @@ roomRouter.post(
       if (!room) {
         res.status(404).json({
           message: "Room not found",
-        });
-        return;
-      }
-
-      const spectators = await prisma.spectator.count({
-        where: {
-          roomId,
-        },
-      });
-
-      if (room.maxSpectators <= spectators) {
-        res.status(400).json({
-          message: "Room is already full",
         });
         return;
       }
@@ -540,7 +526,7 @@ roomRouter.patch(
         return;
       }
 
-      const { isPrivate, maxSpectators, password } = data;
+      const { isPrivate, password } = data;
 
       await prisma.room.update({
         where: {
@@ -548,7 +534,6 @@ roomRouter.patch(
         },
         data: {
           isPrivate: isPrivate,
-          maxSpectators,
           password: password ?? null,
         },
       });

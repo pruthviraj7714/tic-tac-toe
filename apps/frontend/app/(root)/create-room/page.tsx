@@ -19,7 +19,6 @@ export default function CreateRoomPage() {
   const [name, setName] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
   const [password, setPassword] = useState("");
-  const [maxSpectators, setMaxSpectators] = useState(0);
   const [loading, setLoading] = useState(false);
   const { data, status } = useSession();
 
@@ -40,7 +39,6 @@ export default function CreateRoomPage() {
         name,
         isPrivate,
         password: isPrivate ? password : null,
-        maxSpectators: Number(maxSpectators),
       }, {
         headers : {
           Authorization : `Bearer ${data?.accessToken}`
@@ -114,22 +112,6 @@ export default function CreateRoomPage() {
               />
             </div>
           )}
-          <div className="flex flex-col space-y-2">
-            <Label className="text-neutral-300 flex items-center gap-2">
-              <Users className="h-4 w-4" /> Max Spectators
-            </Label>
-            <Input
-              type="number"
-              min={0}
-              max={50}
-              className="bg-neutral-800 border-neutral-700 text-white"
-              value={maxSpectators}
-              onChange={(e) => setMaxSpectators(e.target.valueAsNumber)}
-            />
-            <p className="text-xs text-neutral-500">
-              Set how many people can watch the game.
-            </p>
-          </div>
           x
           <Button
             onClick={handleCreate}

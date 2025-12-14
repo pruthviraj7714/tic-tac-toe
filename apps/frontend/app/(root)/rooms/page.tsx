@@ -95,12 +95,6 @@ export default function RoomsPage() {
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2 text-neutral-400 text-sm">
-                    <Eye className="h-4 w-4" />
-                    Max Spectators:
-                    <span className="text-neutral-200 ml-1">{room.maxSpectators}</span>
-                  </div>
-
                   {room.isPrivate && (
                     <div className="flex items-center gap-2 text-red-400 text-sm">
                       <Lock className="h-4 w-4" />

@@ -23,7 +23,6 @@ interface IRoomData {
   name: string
   isPrivate: boolean
   roomCode: number
-  maxSpectators: number
   password: string | null
   status: "PENDING" | "FULL" | "STARTED"
   createdAt: Date
@@ -316,10 +315,6 @@ export default function RoomPageComponent({ roomId }: { roomId: string }) {
                 <CardTitle>Room Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b border-border">
-                  <span className="text-sm text-muted-foreground">Max Spectators</span>
-                  <span className="font-semibold">{roomInfo?.maxSpectators || 0}</span>
-                </div>
                 <div className="flex justify-between items-center py-2 border-b border-border">
                   <span className="text-sm text-muted-foreground">Games Played</span>
                   <span className="font-semibold">{games.length}</span>

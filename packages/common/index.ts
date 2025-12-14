@@ -19,7 +19,6 @@ export const CreateRoomSchema = z.object({
   name: z
     .string()
     .min(4, { error: "Room Name Should be at least of 4 characters" }),
-  maxSpectators: z.number({ error: "It should be valid number" }),
   isPrivate: z.boolean(),
   password : z.string().min(8, {error : "Password must be at least of 8 characters"}).optional().nullable()
 });
@@ -34,7 +33,6 @@ export const RenameRoomSchema = z.object({
 })
 
 export const UpdateRoomSettingSchema = z.object({
-  maxSpectators: z.number({ error: "It should be valid number" }),
   isPrivate: z.boolean(),
   password : z.string().min(8, {error : "Password must be at least of 8 characters"}).optional()
 })
