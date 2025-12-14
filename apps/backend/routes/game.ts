@@ -69,30 +69,70 @@ gameRouter.post(
   }
 );
 
-gameRouter.get("/get-game", authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const roomId = req.body.roomId;
-    const game = await prisma.game.findFirst({
-      where: {
-        roomId,
-
-      },
-    });
-    if (!game) {
-      return res.status(404).json({
-        message: "Game not found",
+gameRouter.get(
+  "/get-game",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const roomId = req.body.roomId;
+      const game = await prisma.game.findFirst({
+        where: {
+          roomId,
+        },
+      });
+      if (!game) {
+        return res.status(404).json({
+          message: "Game not found",
+        });
+      }
+      return res.status(200).json({
+        message: "Game found",
+        game,
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Internal Server Error",
       });
     }
-    return res.status(200).json({
-      message: "Game found",
-      game,
-    });
   }
-  catch (error) {
-    res.status(500).json({
-      message: "Internal Server Error",
-    });
+);
+
+gameRouter.get(
+  "/room/:roomId",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const roomId = req.params.roomId;
+
+      const games = await prisma.game.findMany({
+        where: {
+          roomId,
+        },
+        include: {
+          player1: {
+            select: {
+              email: true,
+              username: true,
+              id: true,
+            },
+          },
+          player2: {
+            select: {
+              username: true,
+              email: true,
+              id: true,
+            },
+          },
+        },
+      });
+
+      res.status(200).json(games);
+    } catch (error) {
+      res.status(500).json({
+        message: "Internal Server Error",
+      });
+    }
   }
-});
+);
 
 export default gameRouter;
