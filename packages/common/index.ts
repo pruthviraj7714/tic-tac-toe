@@ -24,6 +24,7 @@ export const CreateRoomSchema = z.object({
 });
 
 export const JoinRoomSchema = z.object({
+  roomId : z.string(),
   roomCode : z.number(),
   password : z.string().min(8, {error : "Password must be at least of 8 characters"}).optional()
 })

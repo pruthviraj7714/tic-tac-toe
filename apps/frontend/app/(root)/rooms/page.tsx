@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Lock, Users, Gamepad2, Eye } from "lucide-react"
+import { Lock, Users, Gamepad2 } from "lucide-react"
 import Link from "next/link"
 import axios from "axios"
 import { BACKEND_URL } from "@/lib/config"

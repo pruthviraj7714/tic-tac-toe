@@ -13,24 +13,25 @@ function authenticate(token: string) {
   }
 }
 
+type UserId = string;
+type RoomId = string;
 type Cell = "X" | "O" | "-";
 type GameStatus = "waiting" | "in-progress" | "finished";
 
 interface IUser {
   id: string;
-  username: string;
 }
 
 type ISpectator = IUser;
 
-interface IPlayer extends IUser {
-  symbol: "X" | "O";
-}
+type IPlayer = IUser;
 
 interface IGame {
   currTurn: "X" | "O";
-  player1Symbol: "X" | "O";
-  player2Symbol: "X" | "O";
+  seats: {
+    x: UserId;
+    o: UserId;
+  };
   board: [Cell, Cell, Cell, Cell, Cell, Cell, Cell, Cell, Cell];
   winner: null | IPlayer;
   status: GameStatus;
@@ -38,7 +39,7 @@ interface IGame {
 
 interface IRoom {
   roomId: string;
-  players: [IPlayer, IPlayer, null];
+  players: IPlayer[];
   spectators: ISpectator[];
   games: IGame[];
 }
@@ -60,6 +61,15 @@ wss.on("connection", (ws, req) => {
     return ws.close();
   }
 
+  if (!roomId) {
+    ws.send(
+      JSON.stringify({
+        type: "ERROR",
+        message: "Room Id is missing!",
+      })
+    );
+    return ws.close();
+  }
   const userId = authenticate(token);
 
   if (!userId) {
@@ -70,6 +80,20 @@ wss.on("connection", (ws, req) => {
       })
     );
     return ws.close();
+  }
+
+  let room: IRoom;
+
+  room = rooms.get(roomId) as IRoom;
+
+  if (!room) {
+    room = {
+      games: [],
+      players: [],
+      roomId,
+      spectators: [],
+    };
+    rooms.set(roomId, room);
   }
 
   ws.on("message", async (data) => {
@@ -84,11 +108,37 @@ wss.on("connection", (ws, req) => {
 
     switch (payload.type) {
       case "room:join": {
-        //join room handler
+        const players = room.players;
+        if (players.length >= 2) {
+          return ws.send(
+            JSON.stringify({ type: "ERROR", message: "Room is Full" })
+          );
+        }
+
+        let newPlayer: IPlayer = {
+          id: userId,
+        };
+
+        room = {
+          ...room,
+          players: [...room.players, newPlayer],
+        };
+        rooms.set(roomId, room);
         break;
       }
       case "room:leave": {
-        //leave room handler
+        const players = room.players;
+        if (players.length === 0) {
+          return ws.send(
+            JSON.stringify({ type: "ERROR", message: "Room is Already Empty" })
+          );
+        }
+
+        room = {
+          ...room,
+          players: room.players.filter((player) => player.id !== userId),
+        };
+        rooms.set(roomId, room);
         break;
       }
       case "room:start_game": {

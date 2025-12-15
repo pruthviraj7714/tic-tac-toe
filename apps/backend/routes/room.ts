@@ -84,6 +84,40 @@ roomRouter.get("/all", authMiddleware, async (req: Request, res: Response) => {
   }
 });
 
+roomRouter.get(
+  "/room-metadata/:roomId",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const roomId = req.params.roomId;
+
+      const room = await prisma.room.findFirst({
+        where: {
+          id: roomId,
+        },
+        select: {
+          isPrivate: true,
+          name: true,
+        },
+      });
+
+      if (!room) {
+        res.status(400).json({
+          message: "Room not found!",
+        });
+        return;
+      }
+      res.status(200).json({
+        metadata: room,
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Internal Server Error",
+      });
+    }
+  }
+);
+
 roomRouter.post(
   "/join-room",
   authMiddleware,
@@ -101,17 +135,24 @@ roomRouter.post(
         return;
       }
 
-      const { roomCode, password } = data;
+      const { roomId, roomCode, password } = data;
 
       const room = await prisma.room.findUnique({
         where: {
-          roomCode,
+          id: roomId,
         },
       });
 
       if (!room) {
         res.status(404).json({
           message: "Room not found",
+        });
+        return;
+      }
+
+      if (room.roomCode !== roomCode) {
+        res.status(401).json({
+          message: "Incorrect Room Code",
         });
         return;
       }
@@ -141,7 +182,7 @@ roomRouter.post(
 
       res.status(200).json({
         message: "Room joined successfully",
-        roomId : room.id,
+        roomId: room.id,
       });
     } catch (error) {
       res.status(500).json({
@@ -225,7 +266,6 @@ roomRouter.post(
         data: {
           roomId,
           userId,
-          
         },
       });
 

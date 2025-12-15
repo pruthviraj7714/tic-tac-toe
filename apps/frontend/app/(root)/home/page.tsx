@@ -154,7 +154,7 @@ export default function HomePage() {
                   </p>
 
                   <div className="flex gap-2 mt-4">
-                    <Link href={`/rooms/${room.id}`} className="w-full">
+                    <Link href={`/rooms/${room.id}/join`} className="w-full">
                       <Button className="w-full bg-blue-600 hover:bg-blue-700">
                         <Gamepad2 className="mr-2 h-4 w-4" /> Enter
                       </Button>
